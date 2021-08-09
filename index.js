@@ -6,7 +6,7 @@ const cors = require('cors')
 const sequelize = require('./src/config/sequelize')
 const rootRouter = require('./src/routes/index')
 const bodyParser = require("body-parser");
-const { APP_UPLOADS_ROUTE, APP_UPLOADS_PATH } = process.env;
+const { APP_UPLOADS_ROUTE, APP_UPLOADS_PATH, PORT } = process.env;
 
 app.use(bodyParser.urlencoded({extended: false}));
 
@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
   return res.json(data)
 })
 
-app.listen(8080, () => {
-  console.log('App runing on port 8080')
+app.listen(PORT, () => {
+  console.log(`App runing on port ${PORT}`)
   sequelize.sync()
 })

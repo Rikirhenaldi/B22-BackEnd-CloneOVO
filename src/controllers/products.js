@@ -38,14 +38,14 @@ exports.createProducts = async (req, res) => {
 
 exports.getProductByCategoryId = async (req, res) => {
   const {id} = req.params
-  const data = await productModels.findAll({
-    where : {
-      categoryId: {
-       [Op.substring] : id
-      }
-    }
-  })
   try{
+    const data = await productModels.findAll({
+      where : {
+        categoryId: {
+         [Op.substring] : id
+        }
+      }
+    })
     return res.json({
       success: true,
       message: `List Product of category id: ${id} `,

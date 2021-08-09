@@ -8,5 +8,6 @@ const tokenFcm = sequelize.define('tokenFcm', {
 })
 
 tokenFcm.belongsTo(UserModels, {foreignKey: 'userId', sourceKey: 'id'})
+UserModels.hasOne(tokenFcm)
 
 module.exports = tokenFcm
