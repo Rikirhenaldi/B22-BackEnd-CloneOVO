@@ -1,7 +1,7 @@
 module.exports = {
   phone: {
 		isLength: {
-			errorMessage: "Format Phone number is wrong, number must start with 08 or +62 .. and length mor than 10",
+			errorMessage: "Format Phone number is wrong, number must start with 08 or +62 .. and length more than 10",
 			options: {
 				min: 10,
 			},

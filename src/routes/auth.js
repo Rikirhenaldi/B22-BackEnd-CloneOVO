@@ -10,6 +10,5 @@ const authMidleware = require('../middlewares/auth')
 auth.post('/register',checkSchema(validationRegister) , authUserController.registerUsers)
 auth.post('/loginbynumber',checkSchema(validationLogin2) , authUserController.loginUserByNumber)
 auth.post('/login',checkSchema(validationLogin) , authUserController.loginUser)
-auth.post('/deviceRegisterToken', authMidleware, authUserController.deviceRegisterToken)
 
 module.exports = auth

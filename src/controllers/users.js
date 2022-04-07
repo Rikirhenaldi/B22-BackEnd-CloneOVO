@@ -6,6 +6,8 @@ const { validationResult } = require("express-validator");
 const bcrypt = require("bcrypt");
 const {Op} = require('sequelize')
 const jwt = require('jsonwebtoken')
+const tokenFcm = require('../models/tokenFcm')
+const firebase = require('../helpers/firebase') 
 
 
 exports.updateUser = async (req, res) => {
@@ -177,7 +179,8 @@ exports.transferBalance = async (req, res) => {
           const reciverUser = await UserModels.findOne({
             where: {
               phone: phone
-            }
+            },
+            include: tokenFcm
           })
           try{
               const paymentReceipt = {
@@ -197,6 +200,18 @@ exports.transferBalance = async (req, res) => {
                 balance : user.balance - parseInt(amount) - 2000
               })
               await user.save()
+              // console.log('ini reciver', reciverUser.tokenFcm);
+              if(reciverUser.tokenFcm.deviceToken !== null){
+                console.log('notif sended');
+                firebase.messaging().sendToDevice(reciverUser.tokenFcm.deviceToken,{
+                  notification: {
+                    title: "Transfer Balance",
+                    body: `${user.phone}(${user.name}) telah mengirimkan saldo sebesar ${Number(amount).toLocaleString('en')} melalui aplikasi OVO`
+                  }
+                })
+              }else{
+                console.log('token not send');
+              }
               return res.json({
                 success: true,
                 message: 'Transfer Balance successfully',
@@ -256,6 +271,81 @@ exports.loginPin = async (req, res) => {
       success: false,
       message: 'Login failed',
       results: err
+    })
+  }
+}
+
+
+exports.deviceRegisterToken = async (req, res) => {
+  const {deviceToken} = req.body
+  const id = req.authUser.id
+  console.log('ini auth user',id);
+  const [fcm, created] = await tokenFcm.findOrCreate({
+    where: { deviceToken },
+    defaults: {
+      userId: id
+    }
+  })
+  try{
+    if(!created){
+      fcm.userId = id
+      await fcm.save()
+    }
+    return res.json({
+      success: true,
+      message: 'Device Token Saved'
+    })
+  }catch(err){
+    console.log(err);
+  }
+}
+
+exports.getTransfer = async (req, res) => {
+  const {searchByNumber} = req.query
+  const user = await UserModels.findByPk(req.authUser.id)
+  try{
+    const data = await transfersModels.findAll({
+      where : {
+        [Op.and]:[
+          {userId : user.id},
+          {phoneRecepient : {
+            [Op.substring] : searchByNumber
+           }},
+        ]
+      }
+    })
+    if(searchByNumber.length >= 1){
+      if(data.length >= 1){
+        return res.status(200).json({
+          success: true,
+          message: `Results History Transfers By key ${searchByNumber}`,
+          results: data,
+        }) 
+      }else{
+        return res.status(404).json({
+          success: false,
+          message: `Results History Transfers with Key ${searchByNumber} is not found`,
+        })
+      }
+    }else{
+      if(data){
+        return res.status(200).json({
+          success: true,
+          message: "History Transfers",
+          results: data,
+        }) 
+      }else{
+        return res.status(402).json({
+          success:false,
+          message: "History Transfers Kosong",
+        })
+      }
+    }
+  }catch(err){
+    return res.status(402).json({
+      success:false,
+      message: "You must be login first",
+      erors: err
     })
   }
 }

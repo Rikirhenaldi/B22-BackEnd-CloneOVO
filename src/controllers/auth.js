@@ -1,5 +1,4 @@
 const UserModels = require('../models/users')
-const tokenModels = require('../models/tokenFcm')
 const { validationResult } = require("express-validator");
 const jwt = require('jsonwebtoken')
 const bcrypt = require("bcrypt");
@@ -88,7 +87,18 @@ exports.registerUsers = async (req, res) => {
     if(!errors.isEmpty()){
       return res.status(400).json({ errors: errors.array()[0].msg });
     }else{
-        data.pin = await bcrypt.hash(data.pin, await bcrypt.genSalt());
+        const findUser = await UserModels.findAll({
+          where : {
+            phone: data.phone
+          }
+        })
+        if(findUser.length >= 1){
+          return res.status(402).json({
+            success: false,
+            message: 'Phone number is already in use'
+          })
+        }else{
+          data.pin = await bcrypt.hash(data.pin, await bcrypt.genSalt());
         const user = await UserModels.create(data)
         const finaldata = {
           id: user.id,
@@ -103,6 +113,7 @@ exports.registerUsers = async (req, res) => {
             message: 'register succesfully',
             results: finaldata,
           })
+        }
       }
   }catch(err){
     return res.json({
@@ -113,25 +124,3 @@ exports.registerUsers = async (req, res) => {
   }
 };
 
-exports.deviceRegisterToken = async (req, res) => {
-  const {deviceToken} = req.body
-  const {id} = req.authUser.id
-  const [fcm, created] = await tokenModels.findOrCreate({
-    where: { deviceToken },
-    deaults: {
-      userId: id
-    }
-  })
-  try{
-    if(!created){
-      fcm.userId = id
-      await fcm.save()
-    }
-    return res.json({
-      success: true,
-      message: 'Device Token Saved'
-    })
-  }catch(err){
-    console.log(err);
-  }
-}

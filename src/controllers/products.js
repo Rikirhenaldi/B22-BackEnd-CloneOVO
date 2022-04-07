@@ -59,3 +59,27 @@ exports.getProductByCategoryId = async (req, res) => {
     })
   }
 }
+
+exports.getDetailProductById = async (req, res) => {
+  const {id} = req.params
+  try{
+    const data = await productModels.findOne({
+      where : {
+        id: {
+         [Op.substring] : id
+        }
+      }
+    })
+    return res.json({
+      success: true,
+      message: `Detail Product of id: ${id} `,
+      results: data
+    })
+  }catch(err){
+    return res.json({
+      success: false,
+      message: `product not found`,
+      results: err
+    })
+  }
+}
